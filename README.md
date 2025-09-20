@@ -44,7 +44,7 @@ As part of the data preparation phase, we consolidated three separate market-rel
 
 ```sql
 WITH consolidated_market_data AS (
-  SELECT 
+  SELECT
     c.customer_id,
     c.call_date,
     c.issue_type,
@@ -58,15 +58,15 @@ WITH consolidated_market_data AS (
     g.city,
     g.population_density,
     g.median_income
-  FROM 
+  FROM
     `google-fiber-analytics.support_data.customer_calls` c
-  LEFT JOIN 
+  LEFT JOIN
     `google-fiber-analytics.market_data.market_segments` m
     ON c.customer_id = m.customer_id
-  LEFT JOIN 
+  LEFT JOIN
     `google-fiber-analytics.geographic_data.customer_locations` g
     ON c.customer_id = g.customer_id
-  WHERE 
+  WHERE
     c.call_date >= '2023-01-01'
     AND c.call_date <= '2024-12-31'
 )
@@ -76,6 +76,8 @@ ORDER BY customer_id, call_date;
 ```
 
 **Result**: This consolidation created a comprehensive dataset with 850,000+ records spanning 24 months, enabling market-level analysis of support patterns and the development of market-specific predictive models for repeat caller identification.
+
+**Schema Documentation**: For detailed information about the consolidated table structure, column definitions, and data types, see the [Market Consolidated Schema Documentation](/docs/data_dictionary/market_consolidated_schema.md).
 
 ## Project Structure
 
@@ -171,10 +173,10 @@ google-fiber-bi-analysis/
 
 ## Success Metrics
 
-- Model Accuracy: >85% for repeat caller prediction
-- Dashboard Adoption: >80% of stakeholders using weekly
-- Business Impact: 15% reduction in repeat calls within 6 months
-- ROI: 3:1 return on investment through operational savings
+- **Model Accuracy**: >85% for repeat caller prediction
+- **Dashboard Adoption**: >80% of stakeholders using weekly
+- **Business Impact**: 15% reduction in repeat calls within 6 months
+- **ROI**: 3:1 return on investment through operational savings
 
 ## Stakeholders
 
@@ -227,6 +229,6 @@ For questions about this analysis, contact the Business Intelligence team or ope
 
 ---
 
-*Last updated: September 2025*
-*Project Lead: [Your Name]*
+*Last updated: September 2025*  
+*Project Lead: [Your Name]*  
 *Business Sponsor: Customer Support VP*
