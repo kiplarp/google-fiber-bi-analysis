@@ -215,20 +215,3 @@ pip install -r requirements.txt
 3. Run data processing pipeline: `python src/data/process_support_data.py`
 4. Launch initial dashboard: `python src/visualization/launch_dashboard.py`
 
-## Contributing
-
-This project follows the Google Fiber Data Science team's coding standards and review process. Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines.
-
-## License
-
-Internal Google Fiber project - confidential and proprietary.
-
-## Contact
-
-For questions about this analysis, contact the Business Intelligence team or open an issue in this repository.
-
----
-
-*Last updated: September 2025*  
-*Project Lead: [Your Name]*  
-*Business Sponsor: Customer Support VP*
