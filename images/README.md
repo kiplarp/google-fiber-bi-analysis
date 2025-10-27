@@ -5,7 +5,7 @@ This directory contains screenshots and visual assets from the Google Fiber BI A
 ## Contents
 
 ### Dashboard Screenshots
-- `dashboard_screenshot.png` - Complete dashboard overview showing all KPIs and visualizations
+- `fiber_screenshot.png` - Complete dashboard overview showing all KPIs and visualizations
 
 ### Component Visualizations
 - KPI scorecard images
