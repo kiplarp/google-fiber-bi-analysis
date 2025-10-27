@@ -37,110 +37,53 @@ Anonymized call-center extracts were prepared for analysis and staged for BI mod
 - Confirmed shared schema: `date_created`, problem type, market ID, `contacts_n`, and seven repeat-day columns (`contacts_n_1` through `contacts_n_7`).
 ### Step 1: Initial Upload
 Three CSV files representing call-center data across distinct markets were uploaded directly to BigQuery using the console import wizard. Each dataset includes first-contact call volumes and repeat-call counts for each day offset.
-### Step 2: Table Consolidation in BigQuery
+### Step 2: Data Validation
+Post-upload checks confirmed:
+- Consistent row counts with original extracts
+- Full population of required columns
+- Expected date ranges and numeric distributions
+- No schema conflicts across market files
 ---
-## Phase 2: Data Engineering & SQL Process
-This phase consolidated the three market-specific tables, built fact tables for efficient aggregation, and created a summary view optimized for Looker Studio dashboards.
-
-### Merge Sources for Cross-Market Dataset
-The three market-specific staging tables were consolidated using a UNION ALL pattern to enable cross-market analysis:
-
+## Phase 2: Data Transformation and Modeling
+Data from three market tables was combined and transformed in BigQuery for analysis, enabling unified queries across regions and problem types while maintaining data integrity.
+### Activities
+- Merged market tables into a single analytical view.
+- Created calculated fields for total repeat calls and repeat rate metrics.
+- Added time-grain fields (week, month, quarter, year) for flexible reporting.
+- Validated cross-market consistency in field definitions and grain calculations.
+### Transformation Steps
+#### 1. Data Merge
+Individual market tables were combined using UNION ALL to create a master dataset preserving all regional and problem-type dimensions:
 ```sql
-CREATE OR REPLACE TABLE `project.fiber.market_consolidated` AS
-SELECT * FROM `project.fiber.market_1`
+SELECT * FROM `project.dataset.market_1`
 UNION ALL
-SELECT * FROM `project.fiber.market_2`
+SELECT * FROM `project.dataset.market_2`
 UNION ALL
-SELECT * FROM `project.fiber.market_3`;
+SELECT * FROM `project.dataset.market_3`;
 ```
-
-This approach preserves all rows from each source and establishes a single table for downstream transformations.
-
-### Build Fact Tables for Contacts and Repeats
-Two fact tables were created to structure the data for efficient aggregation:
-
-**Fact Table 1: First Contacts**  
-This table captures first-contact call volumes with type casting and null-safe handling:
-
-```sql
--- Cast date, market, and type fields to standard types;
--- use IFNULL and SAFE_CAST to handle missing or malformed contact counts.
-CREATE TABLE `project.fiber.fact_calls` AS
-SELECT
-  CAST(date_field AS DATE)        AS datecreated,
-  CAST(market_field AS STRING)    AS new_market,
-  CAST(type_field AS STRING)      AS new_type,
-  IFNULL(SAFE_CAST(contact_field AS INT64), 0) AS contacts_n
-FROM `project.fiber.market_consolidated`;
-```
-
-**Fact Table 2: Repeat Calls by Offset**  
-Repeat call counts (stored as seven separate columns) were unpivoted into a tabular format using an ARRAY and UNNEST pattern:
-
-```sql
--- Collect the seven repeat-count columns into an ARRAY,
--- then UNNEST with GENERATE_ARRAY to create one row per offset day.
-CREATE TABLE `project.fiber.fact_repeats` AS
-WITH src AS (
-  SELECT
-    CAST(date_field AS DATE)      AS datecreated,
-    CAST(market_field AS STRING)  AS new_market,
-    CAST(type_field AS STRING)    AS new_type,
-    [repeat_day1, repeat_day2, repeat_day3, repeat_day4, 
-     repeat_day5, repeat_day6, repeat_day7] AS repeats
-  FROM `project.fiber.market_consolidated`
-)
-SELECT
-  s.datecreated,
-  s.new_market,
-  s.new_type,
-  off AS repeat_offset_days,
-  IFNULL(SAFE_CAST(s.repeats[OFFSET(off-1)] AS INT64), 0) AS repeat_calls
-FROM src s
-JOIN UNNEST(GENERATE_ARRAY(1,7)) AS off;
-```
-
-This design normalizes the repeat data, making day-level breakdowns straightforward.
-
-### Create Summary View for Executive Dashboard
-A final view joins the two fact tables and calculates key performance indicators:
-
-```sql
--- Aggregate first-contact and repeat calls by date, market, and type;
--- compute repeat rate using SAFE_DIVIDE to handle zero denominators.
-CREATE OR REPLACE VIEW `project.fiber.vw_repeat_summary` AS
-SELECT
-  c.datecreated,
-  c.new_market,
-  c.new_type,
-  SUM(c.contacts_n)                                AS first_contact_calls,
-  SUM(r.repeat_calls)                              AS repeat_calls_7d,
-  SAFE_DIVIDE(SUM(r.repeat_calls), SUM(c.contacts_n)) AS repeat_rate
-FROM `project.fiber.fact_calls` c
-LEFT JOIN `project.fiber.fact_repeats` r
-  ON r.datecreated = c.datecreated
- AND r.new_market  = c.new_market
- AND r.new_type    = c.new_type
-GROUP BY 1, 2, 3;
-```
-
-This view powers the executive dashboard with precomputed metrics for each date/market/type combination.
-
+#### 2. Calculated Fields
+Repeat rate and aggregate metrics were derived:
+- **Total Repeats:** Sum of contacts_n_1 through contacts_n_7
+- **Repeat Rate:** (Total Repeats / contacts_n) * 100
+- **Market Labels:** Friendly names replacing internal codes
+- **Problem Type Labels:** Descriptive names for type1–type5
+#### 3. Time-Grain Enhancement
+Date fields were expanded to support flexible reporting:
+- **Week:** DATE_TRUNC(date_created, WEEK)
+- **Month:** DATE_TRUNC(date_created, MONTH)
+- **Quarter:** DATE_TRUNC(date_created, QUARTER)
+- **Year:** EXTRACT(YEAR FROM date_created)
 ---
-## Phase 3: Dashboard Design in Looker Studio
-Google Looker Studio serves as the front-end BI layer, with dashboards fed directly by the summary view and fact tables.
-### Design Approach
-- **User-Centered:** Dashboards prioritize clarity and executive-level insights over exhaustive detail.
-- **Consistent Theming:** Light styling using Google Fiber brand neutrals, clear typography, minimal distractions.
-- **Flexible Filtering:** Date ranges, market and problem-type selectors enable ad hoc exploration.
-### Dashboard Visuals and Insights
-- **Executive Summary Scorecard:**
-  - Total first-contact calls, total repeat calls, and overall repeat rate KPIs at a glance.
-- **Repeat Rate by Problem Type:**
-  - Bar chart reveals which problem types (Type 1–Type 5) trigger the most repeat calls, guiding training and playbook updates.
-- **Repeat Rate by Market:**
-  - Bar chart shows market-level variance, enabling leadership to prioritize resource allocation.
-- **Repeat Rate Trend Over Time:**
+## Phase 3: Dashboard Design and Insights
+A Looker Studio dashboard was built to make repeat-call patterns accessible to executives and operations leaders, emphasizing actionable insights over raw data.
+### Dashboard Screenshot
+![Dashboard Screenshot](images/fiber_dashboard.png)
+### Key Metrics Displayed
+- **Repeat Call Rate by Market:**
+  - Bar chart showing percentage of customers calling back within seven days per market.
+- **Repeat Calls by Problem Type:**
+  - Horizontal bar chart ranking problem categories by volume of repeat contacts.
+- **Daily Repeat Call Trend:**
   - Line chart tracking repeat rate across dates, highlighting recent improvements or emerging issues.
 - **Market–Type Heatmap:**
   - Two-dimensional heatmap identifies the specific market/problem-type combinations with the highest repeat burden.
