@@ -77,7 +77,7 @@ Date fields were expanded to support flexible reporting:
 ## Phase 3: Dashboard Design and Insights
 A Looker Studio dashboard was built to make repeat-call patterns accessible to executives and operations leaders, emphasizing actionable insights over raw data.
 ### Dashboard Screenshot
-![Dashboard Screenshot](images/fiber_dashboard.png)
+![Dashboard Screenshot](images/Fiber_screenshot.png)
 ### Key Metrics Displayed
 - **Repeat Call Rate by Market:**
   - Bar chart showing percentage of customers calling back within seven days per market.
