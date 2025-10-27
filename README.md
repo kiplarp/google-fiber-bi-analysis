@@ -38,7 +38,6 @@ Anonymized call-center extracts were prepared for analysis and staged for BI mod
 ### Step 1: Initial Upload
 Three CSV files representing call-center data across distinct markets were uploaded directly to BigQuery using the console import wizard. Each dataset includes first-contact call volumes and repeat-call counts for each day offset.
 ### Step 2: Table Consolidation in BigQuery
-Three market-specific tables are hosted in the `fiber` dataset within the project.
 ---
 ## Phase 2: Data Engineering & SQL Process
 This phase consolidated the three market-specific tables, built fact tables for efficient aggregation, and created a summary view optimized for Looker Studio dashboards.
@@ -129,7 +128,7 @@ This view powers the executive dashboard with precomputed metrics for each date/
 
 ---
 ## Phase 3: Dashboard Design in Looker Studio
-Google Looker Studio (formerly Data Studio) serves as the front-end BI layer, with dashboards fed directly by the summary view and fact tables.
+Google Looker Studio serves as the front-end BI layer, with dashboards fed directly by the summary view and fact tables.
 ### Design Approach
 - **User-Centered:** Dashboards prioritize clarity and executive-level insights over exhaustive detail.
 - **Consistent Theming:** Light styling using Google Fiber brand neutrals, clear typography, minimal distractions.
